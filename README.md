@@ -1,6 +1,6 @@
 # JPSPlus
 
-JPSPlus is a high-performance **2D grid pathfinding** library for Roblox based on **Jump Point Search Plus (JPS+)**. It preprocesses static maps to enable very fast A* queries by “jumping” between critical nodes while preserving **optimal** paths on uniform-cost grids.
+JPSPlus is a high-performance **2D grid pathfinding** library for Roblox based on **Jump Point Search Plus (JPS+)** algorithm. It preprocesses static maps to enable very fast A* queries by “jumping” between critical nodes while preserving **optimal** paths on uniform-cost grids.
 
 ## When to use
 Best for:
