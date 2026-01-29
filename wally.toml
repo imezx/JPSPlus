@@ -1,0 +1,18 @@
+[package]
+name = "imezx/jpsplus"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "LGPL-3.0"
+authors = ["EternityDev"]
+exclude = ["**"]
+include = [
+    "default.project.json",
+    "src",
+	"src/**",
+    "LICENSE",
+    "wally.toml",
+]
+description = "JPSPlus is a fast 2D grid pathfinding library for Roblox using Jump Point Search Plus (JPS+) algorithm. It preprocesses static maps for very quick A* queries with optimal paths on uniform-cost grids, with optional path expansion and smoothing for Dummy movement."
+
+[dependencies]
