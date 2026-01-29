@@ -1,0 +1,18 @@
+node_modules
+# .github
+.rbxl
+rbxmx
+.rbxml
+.rbxm
+TestEZ
+test.project.json
+wally.lock
+sourcemap.json
+Packages
+dev
+test.project.json
+rewrite
+generate.py
+.vscode
+*.zip
+docs/.vitepress/*
