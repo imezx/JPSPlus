@@ -148,7 +148,7 @@ local function chaseNPC(npc: Model, visual, getTargetPos: () -> Vector3?)
 	local replanInterval = 1 / replanHz
 	local moveUpdateHz = 20 -- how often to re-issue MoveTo
 	local moveUpdateInterval = 1 / moveUpdateHz
-	local waypointReach = 1.5 -- studs
+	local waypointReach = 2 -- studs
 
 	local currentPath: {Vector3}? = nil
 	local wpIndex = 1
