@@ -214,8 +214,9 @@ function Planner:findPath(sx, sy, gx, gy, options)
 
 		local curByte = (current - 1) * 2
 
+		local bit = 1
 		for dir = 1, 8 do
-			if bit32.band(mask, bit32.lshift(1, dir - 1)) ~= 0 then
+			if bit32.band(mask, bit) ~= 0 then
 				local baseB = offB[dir]
 				local c = readu16(clearBuf, baseB + curByte)
 				if c > 0 then
@@ -262,6 +263,7 @@ function Planner:findPath(sx, sy, gx, gy, options)
 					end
 				end
 			end
+			bit = bit32.lshift(bit, 1)
 		end
 	end
 
