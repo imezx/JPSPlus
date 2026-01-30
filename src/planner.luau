@@ -74,18 +74,38 @@ local function successorMask(db, id, inDir)
 
 	local function bit(d) return bit32.lshift(1, d - 1) end
 
+	local function isForced(nId, diagId)
+		return (not blocked[nId]) and blocked[diagId]
+	end
+	
 	if inDir == Dirs.E then
-		if blocked[id - stride] then mask = bit32.bor(mask, bit(Dirs.NE)) end
-		if blocked[id + stride] then mask = bit32.bor(mask, bit(Dirs.SE)) end
+		if isForced(id - stride, id - stride - 1) then 
+			mask = bit32.bor(mask, bit(Dirs.N), bit(Dirs.NE)) 
+		end
+		if isForced(id + stride, id + stride - 1) then 
+			mask = bit32.bor(mask, bit(Dirs.S), bit(Dirs.SE)) 
+		end
 	elseif inDir == Dirs.W then
-		if blocked[id - stride] then mask = bit32.bor(mask, bit(Dirs.NW)) end
-		if blocked[id + stride] then mask = bit32.bor(mask, bit(Dirs.SW)) end
+		if isForced(id - stride, id - stride + 1) then 
+			mask = bit32.bor(mask, bit(Dirs.N), bit(Dirs.NW)) 
+		end
+		if isForced(id + stride, id + stride + 1) then 
+			mask = bit32.bor(mask, bit(Dirs.S), bit(Dirs.SW)) 
+		end
 	elseif inDir == Dirs.N then
-		if blocked[id - 1] then mask = bit32.bor(mask, bit(Dirs.NW)) end
-		if blocked[id + 1] then mask = bit32.bor(mask, bit(Dirs.NE)) end
+		if isForced(id - 1, id - 1 + stride) then 
+			mask = bit32.bor(mask, bit(Dirs.W), bit(Dirs.NW)) 
+		end
+		if isForced(id + 1, id + 1 + stride) then 
+			mask = bit32.bor(mask, bit(Dirs.E), bit(Dirs.NE)) 
+		end
 	elseif inDir == Dirs.S then
-		if blocked[id - 1] then mask = bit32.bor(mask, bit(Dirs.SW)) end
-		if blocked[id + 1] then mask = bit32.bor(mask, bit(Dirs.SE)) end
+		if isForced(id - 1, id - 1 - stride) then 
+			mask = bit32.bor(mask, bit(Dirs.W), bit(Dirs.SW)) 
+		end
+		if isForced(id + 1, id + 1 - stride) then 
+			mask = bit32.bor(mask, bit(Dirs.E), bit(Dirs.SE)) 
+		end
 	else
 		local d1 = Dirs.diagForced1[inDir]
 		local d2 = Dirs.diagForced2[inDir]
@@ -231,9 +251,26 @@ function Planner:findPath(sx, sy, gx, gy, options)
 						nid = goal
 					else
 						local j = readu16(jumpBuf, baseB + curByte)
-						if j > 0 and j <= c then
-							stepsTaken = j
-							nid = current + j * step[dir]
+						local bestDist = (j > 0) and j or (c + 1)
+						if Dirs.isDiag[dir] then
+							local rx = gix - cix -- relative X to goal
+							local ry = giy - ciy -- relative Y to goal
+							if (rx > 0 and dx > 0) or (rx < 0 and dx < 0) then
+								local distToRow = math.abs(rx)
+								if distToRow < bestDist then
+									bestDist = distToRow
+								end
+							end
+							if (ry > 0 and dy > 0) or (ry < 0 and dy < 0) then
+								local distToCol = math.abs(ry)
+								if distToCol < bestDist then
+									bestDist = distToCol
+								end
+							end
+						end
+						if bestDist <= c then
+							stepsTaken = bestDist
+							nid = current + bestDist * step[dir]
 						end
 					end
 
