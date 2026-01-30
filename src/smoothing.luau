@@ -2,13 +2,11 @@
 --!optimize 2
 local Smoothing = {}
 
-local abs = math.abs
-
 local function hasLOS(blocked, stride, x0, y0, x1, y1)
 	local dx = x1 - x0
 	local dy = y1 - y0
-	local adx = abs(dx)
-	local ady = abs(dy)
+	local adx = math.abs(dx)
+	local ady = math.abs(dy)
 	local sx = (dx > 0 and 1) or (dx < 0 and -1) or 0
 	local sy = (dy > 0 and 1) or (dy < 0 and -1) or 0
 	
