@@ -1,15 +1,21 @@
 --!optimize 2
+--!native
+local PhysicsService = game:GetService("PhysicsService")
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 
 local JPSPlus = require("./JPSPlus")
 local WorldGrid = require("./WorldGrid")
 
-local npcModel = workspace:WaitForChild("Rig")
+local npcModel1 = workspace:WaitForChild("Agent 1")
+local npcModel2 = workspace:WaitForChild("Agent 2")
 
-local origin = Vector3.new(-512, 0, -512)
+PhysicsService:RegisterCollisionGroup("Agent")
+PhysicsService:CollisionGroupSetCollidable("Agent", "Agent", false)
+
+local origin = Vector3.new(-128, 0, -128)
 local cellSize = 2
-local width, height = 512, 512
+local width, height = 128, 128
 
 local adapter = WorldGrid.new(origin, cellSize, width, height)
 
@@ -44,14 +50,15 @@ local function snapToGround(p: Vector3, fallbackY: number)
 	return Vector3.new(p.X, fallbackY, p.Z)
 end
 
-local function makePathVisualizer(folderName: string)
+local function makePathVisualizer(folderName: string, idx: number)
 	local folder = workspace:FindFirstChild(folderName)
 	if not folder then
 		folder = Instance.new("Folder")
 		folder.Name = folderName
 		folder.Parent = workspace
 	end
-
+	
+	local randomColor = Color3.fromRGB(math.random(0, 255), math.random(0, 255), math.random(0, 255))
 	local pool: {BasePart} = {}
 
 	local function getPart(i: number): BasePart
@@ -59,13 +66,13 @@ local function makePathVisualizer(folderName: string)
 		if part then return part end
 
 		part = Instance.new("Part")
-		part.Name = tostring(i)
+		part.Name = `{i}-{idx}`
 		part.Size = Vector3.new(0.5, 0.5, 0.5)
 		part.Anchored = true
 		part.CanCollide = false
 		part.Shape = Enum.PartType.Ball
 		part.Material = Enum.Material.Neon
-		part.Color = Color3.fromRGB(255, 255, 255)
+		part.Color = randomColor
 		part.Transparency = 0.5
 		part.Parent = folder
 
@@ -104,8 +111,6 @@ local function makePathVisualizer(folderName: string)
 	}
 end
 
-local visual = makePathVisualizer("Visual")
-
 local function findWorldPath(startPos: Vector3, goalPos: Vector3, yHint: number): {Vector3}?
 	local sx, sy = adapter:worldToCell(startPos)
 	local gx, gy = adapter:worldToCell(goalPos)
@@ -131,15 +136,19 @@ local function findWorldPath(startPos: Vector3, goalPos: Vector3, yHint: number)
 	return points
 end
 
-local function chaseNPC(npc: Model, getTargetPos: () -> Vector3?)
+local function chaseNPC(npc: Model, visual, getTargetPos: () -> Vector3?)
+	for _, obj in npc:GetDescendants() do
+		if not obj:IsA("BasePart") then continue end
+		obj.CollisionGroup = "Agent"
+	end
 	local humanoid = npc:WaitForChild("Humanoid") :: Humanoid
 	local root = npc:WaitForChild("HumanoidRootPart") :: BasePart
 
-	local replanHz = 10 -- 15 replans/sec is usually enough
+	local replanHz = 10 -- 10 replans/sec is usually enough
 	local replanInterval = 1 / replanHz
 	local moveUpdateHz = 20 -- how often to re-issue MoveTo
 	local moveUpdateInterval = 1 / moveUpdateHz
-	local waypointReach = 3 -- studs
+	local waypointReach = 1.5 -- studs
 
 	local currentPath: {Vector3}? = nil
 	local wpIndex = 1
@@ -153,7 +162,7 @@ local function chaseNPC(npc: Model, getTargetPos: () -> Vector3?)
 		local lastMoveToTime = 0
 		while npc.Parent do
 			task.wait()
-			
+
 			local targetPos = getTargetPos()
 			if not targetPos then
 				currentPath = nil
@@ -178,12 +187,12 @@ local function chaseNPC(npc: Model, getTargetPos: () -> Vector3?)
 			end
 		end
 	end)
-	
+
 	while npc.Parent do
 		local now = os.clock()
 		local targetPos = getTargetPos()
 		if not targetPos then
-			task.wait(0.1)
+			task.wait(moveUpdateInterval)
 			continue
 		end
 
@@ -206,7 +215,7 @@ local function chaseNPC(npc: Model, getTargetPos: () -> Vector3?)
 				if myVersion ~= pathVersion then
 					return
 				end
-				
+
 				if path and #path > 0 then
 					failedReplans = 0
 					currentPath = path
@@ -224,11 +233,15 @@ local function chaseNPC(npc: Model, getTargetPos: () -> Vector3?)
 	end
 end
 
-task.spawn(function()
-	chaseNPC(npcModel, function()
-		local plr = Players:GetPlayers()[1]
-		local char = plr and plr.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		return hrp and hrp.Position or nil
-	end)
+local visual = makePathVisualizer("Visual", 0)
+local visual2 = makePathVisualizer("Visual", 1000)
+
+task.spawn(chaseNPC, npcModel1, visual, function()
+	local plr = Players:GetPlayers()[1]
+	local char = plr and plr.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	return hrp and hrp.Position
+end)
+task.spawn(chaseNPC, npcModel2, visual2, function()
+	return npcModel1 and npcModel1.PrimaryPart.Position
 end)
